@@ -2,16 +2,18 @@ import gym
 import numpy as np
 from gym import spaces
 
+
 class TaxiSimplified(gym.Env):
     def __init__(self, goals, goal_reward, death_penalty, episode_limit):
         super(TaxiSimplified, self).__init__()
-        self.env = gym.make('Taxi-v3')
+
         self.goals = goals
         self.current_goal = None
+        self.steps_without_reward = 0
         self.goal_reward = goal_reward
+        self.env = gym.make('Taxi-v3')
         self.death_penalty = death_penalty
         self.episode_limit = episode_limit
-        self.steps_without_reward = 0
         self.action_space = self.env.action_space
         self.observation_space = spaces.Box(low=0, high=4, shape=(5,), dtype=np.uint8)
 
@@ -63,3 +65,6 @@ class TaxiSimplified(gym.Env):
             self.steps_without_reward = 0
 
         return reward, done
+
+
+
