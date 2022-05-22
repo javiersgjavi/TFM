@@ -1,5 +1,5 @@
 import argparse
-from Taxi import Taxi
+from TaxiExperiment import Taxi
 from Montezuma import Montezuma
 
 
@@ -11,7 +11,9 @@ def main(args):
     elif env_id == 1:
         experiment = Taxi()
 
-    experiment.train(steps=10**6, episodes=10**6)
+    experiment.train(steps=7*10**5)
+
+
 
 
 if __name__ == '__main__':

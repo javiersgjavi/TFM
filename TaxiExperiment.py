@@ -11,7 +11,7 @@ class Taxi:
         self.num_goals = num_goals
         self.env_controller = 'TaxiSimplified-v0'
         self.env_meta_controller = 'TaxiHierarchical-v0'
-        self.goals_detected = np.zeros((self.num_goals, 3))
+        self.goals_detected = []
         self.path_w_controller = './weights_controller/'
         self.path_w_meta_controller = './weights_metacontroller/'
 
@@ -46,7 +46,7 @@ class Taxi:
         gym.envs.register(
             id=self.env_meta_controller,
             entry_point='envs.TaxiHierarchical:TaxiHierarchical',
-            max_episode_steps=20,
+            max_episode_steps=2,
             kwargs={'goals': self.goals_detected}
         )
 
@@ -77,13 +77,15 @@ class Taxi:
             if rewards > 0 and self.check_anomaly(position, goals):
                 goals.append(position)
 
-        for i in range(0, len(goals), 2):
-            x, y = goals[i // 2][0], goals[i // 2][1]
+        for i in range(len(goals)):
+            x, y = goals[i][0], goals[i][1]
 
-            self.goals_detected[i] = np.array([x, y, 0])
-            self.goals_detected[i + 1] = np.array([x, y, 1])
+            self.goals_detected.append(np.array([x, y, 0]))
+            self.goals_detected.append(np.array([x, y, 1]))
 
+        self.goals_detected = np.array(self.goals_detected)
         print(f'[INFO] Detected goals: {goals}')
+        print(self.goals_detected, self.goals_detected.shape)
 
     def train(self, steps=5 * 10 ** 5, episodes=5 * 10 ** 5, n_envs=10):
         self.intrinsic_learning(steps, n_envs)
@@ -93,17 +95,6 @@ class Taxi:
             os.makedirs('./goals_detected/')
 
         np.save('./goals_detected/trained_goals.npy', self.goals_detected)
-
-    def generate_random_goals(self):
-        goals = np.zeros((self.num_goals*2, 3))
-        for i in range(0, 2 * self.num_goals, 2):
-            x = np.random.randint(6)
-            y = np.random.randint(6)
-
-            goals[i] = np.array([x, y, 0])
-            goals[i+1] = np.array([x, y, 1])
-
-        return goals
 
     def check_anomaly(self, position, goals):
         res = True
