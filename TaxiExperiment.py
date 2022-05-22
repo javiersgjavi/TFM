@@ -14,6 +14,7 @@ class Taxi:
         self.goals_detected = []
         self.path_w_controller = './weights_controller/'
         self.path_w_meta_controller = './weights_metacontroller/'
+        self.path_goals_detected = './goals_detected/'
 
     def intrinsic_learning(self, steps, n_envs=10):
         print('[INFO] Starting intrinsic learning...')
@@ -85,9 +86,13 @@ class Taxi:
 
         self.goals_detected = np.array(self.goals_detected)
         print(f'[INFO] Detected goals: {goals}')
-        print(self.goals_detected, self.goals_detected.shape)
 
-    def train(self, steps=5 * 10 ** 5, episodes=5 * 10 ** 5, n_envs=10):
+        if not os.path.exists(self.path_goals_detected):
+            os.makedirs(self.path_goals_detected)
+
+        np.save(f'{self.path_goals_detected}trained_taxi.npy', self.goals_detected)
+
+    def train(self, steps=5 * 10 ** 5, episodes=3 * 10 ** 5, n_envs=10):
         self.intrinsic_learning(steps, n_envs)
         self.unified_learning(episodes)
 
@@ -95,6 +100,26 @@ class Taxi:
             os.makedirs('./goals_detected/')
 
         np.save('./goals_detected/trained_goals.npy', self.goals_detected)
+
+    def test(self):
+        goals = np.load('./goals_detected/trained_goals.npy')
+        print(goals)
+
+        gym.envs.register(
+            id=self.env_meta_controller,
+            entry_point='envs.TaxiHierarchical:TaxiHierarchical',
+            max_episode_steps=2,
+            kwargs={'goals': goals}
+        )
+
+        model = PPO.load(f'{self.path_w_meta_controller}/taxi')
+        env = gym.make(self.env_meta_controller)
+
+        state = env.reset()
+        while True:
+            action, _states = model.predict(state)
+            state, reward, done, info = env.step(action, render=True)
+            print(reward)
 
     def check_anomaly(self, position, goals):
         res = True
@@ -104,3 +129,4 @@ class Taxi:
                 res = False
                 break
         return res
+
