@@ -9,8 +9,8 @@ class Taxi:
     def __init__(self, num_goals=4):
 
         self.num_goals = num_goals
-        self.env_controller = 'taxiSimplified-v0'
-        self.env_meta_controller = 'taxiHierarchical-v0'
+        self.env_controller = 'TaxiSimplified-v0'
+        self.env_meta_controller = 'TaxiHierarchical-v0'
         self.goals_detected = np.zeros((self.num_goals, 3))
         self.path_w_controller = './weights_controller/taxi'
         self.path_w_meta_controller = './weights_metacontroller/taxi'
@@ -76,10 +76,12 @@ class Taxi:
                 goals.append(position)
 
         for i in range(0, len(goals), 2):
-            x, y = goals[i / 2][0], goals[i / 2][1]
+            x, y = goals[i // 2][0], goals[i // 2][1]
 
             self.goals_detected[i] = np.array([x, y, 0])
             self.goals_detected[i + 1] = np.array([x, y, 1])
+
+        print(f'[INFO] Detected goals: {goals}')
 
     def train(self, steps=5 * 10 ** 5, episodes=5 * 10 ** 5, n_envs=10):
         self.intrinsic_learning(steps, n_envs)
