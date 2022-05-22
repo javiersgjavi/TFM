@@ -1,12 +1,17 @@
 import argparse
 from Taxi import Taxi
+from Montezuma import Montezuma
 
 
 def main(args):
     env_id = int(args.environment[0])
-    if env_id == 1:
+
+    if env_id == 0:
+        experiment = Montezuma()
+    elif env_id == 1:
         experiment = Taxi()
-        experiment.train()
+
+    experiment.train(steps=10**6, episodes=10**6)
 
 
 if __name__ == '__main__':

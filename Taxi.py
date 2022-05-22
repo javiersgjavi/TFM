@@ -23,7 +23,7 @@ class Taxi:
             entry_point='envs.TaxiSimplified:TaxiSimplified',
             max_episode_steps=20,
             kwargs={
-                'goals': self.generate_random_goals(),
+                'num_goals': 4,
                 'goal_reward': 100,
                 'death_penalty': -20,
                 'episode_limit': 12}
@@ -39,6 +39,8 @@ class Taxi:
         model.save(f'{self.path_w_controller}/taxi')
 
     def unified_learning(self, steps, n_envs=10):
+        self.explore_goals()
+
         print('[INFO] Starting unified learning...')
 
         gym.envs.register(
@@ -85,7 +87,6 @@ class Taxi:
 
     def train(self, steps=5 * 10 ** 5, episodes=5 * 10 ** 5, n_envs=10):
         self.intrinsic_learning(steps, n_envs)
-        self.explore_goals()
         self.unified_learning(episodes)
 
         if not os.path.exists('./goals_detected/'):

@@ -3,7 +3,7 @@ import numpy as np
 from gym import spaces
 
 
-class MontezumaIntrinsic(gym.Env):
+class MontezumaSimplified(gym.Env):
     def __init__(self, goals, goal_reward, death_penalty, episode_limit, margin):
         super(MontezumaIntrinsic, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')

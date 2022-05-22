@@ -4,10 +4,11 @@ from gym import spaces
 
 
 class TaxiSimplified(gym.Env):
-    def __init__(self, goals, goal_reward, death_penalty, episode_limit):
+    def __init__(self, num_goals, goal_reward, death_penalty, episode_limit):
         super(TaxiSimplified, self).__init__()
 
-        self.goals = goals
+        self.num_goals = num_goals
+        self.goals = self.generate_random_goals()
         self.current_goal = None
         self.steps_without_reward = 0
         self.goal_reward = goal_reward
@@ -16,11 +17,15 @@ class TaxiSimplified(gym.Env):
         self.episode_limit = episode_limit
         self.action_space = self.env.action_space
         self.observation_space = spaces.Box(low=0, high=4, shape=(5,), dtype=np.uint8)
+        self.steps = 0
+        self.steps_last_change_goals = 0
+        self.steps_to_change_goals = 10 ** 4
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
         i_observation = self.get_intrinsic_state(observation)
         i_reward, done = self.calculate_reward(i_observation, action, done)
+        self.change_goals()
 
         return i_observation, i_reward, done, info
 
@@ -66,5 +71,19 @@ class TaxiSimplified(gym.Env):
 
         return reward, done
 
+    def change_goals(self):
+        self.steps += 1
+        if self.steps - self.steps_last_change_goals >= self.steps_to_change_goals:
+            self.goals = self.generate_random_goals()
+            self.steps_last_change_goals = self.steps
 
+    def generate_random_goals(self):
+        goals = np.zeros((self.num_goals * 2, 3))
+        for i in range(0, 2 * self.num_goals, 2):
+            x = np.random.randint(6)
+            y = np.random.randint(6)
 
+            goals[i] = np.array([x, y, 0])
+            goals[i + 1] = np.array([x, y, 1])
+
+        return goals
