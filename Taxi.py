@@ -12,8 +12,8 @@ class Taxi:
         self.env_controller = 'TaxiSimplified-v0'
         self.env_meta_controller = 'TaxiHierarchical-v0'
         self.goals_detected = np.zeros((self.num_goals, 3))
-        self.path_w_controller = './weights_controller/taxi'
-        self.path_w_meta_controller = './weights_metacontroller/taxi'
+        self.path_w_controller = './weights_controller/'
+        self.path_w_meta_controller = './weights_metacontroller/'
 
     def intrinsic_learning(self, steps, n_envs=10):
         print('[INFO] Starting intrinsic learning...')
