@@ -36,6 +36,7 @@ class MontezumaHierarchical(gym.Env):
 
             i_state = self.get_intrinsic_state(state)
             life = self.get_life(state)
+            print(self.get_position(state), self.current_goal)
 
             if self.life == life:
                 self.kmeans.store_experience(self.get_position(state))

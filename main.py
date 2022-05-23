@@ -13,7 +13,7 @@ def main(args):
         experiment = Taxi()
 
     if job == 0:
-        experiment.train()
+        experiment.unified_learning(steps=5*10**5)
     elif job == 1:
         experiment.test()
 
