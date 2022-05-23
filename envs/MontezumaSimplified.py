@@ -62,7 +62,7 @@ class MontezumaSimplified(gym.Env):
         self.steps += 1
         if self.steps - self.steps_last_kmeans >= self.steps_kmeans:
             print(f'Last goals: {self.goals}')
-            self.goals = self.kmeans.fit(self.goals)
+            self.goals = self.kmeans.fit(self.goals, self.steps_last_kmeans == 0)
             print(f'New goals: {self.goals}')
             self.steps_last_kmeans = self.steps
 
