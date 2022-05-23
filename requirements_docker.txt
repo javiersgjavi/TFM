@@ -1,0 +1,7 @@
+gym[atari]==0.21.0
+gym[accept-rom-license]
+numpy==1.19.2
+matplotlib==3.5.1
+scikit-learn==1.0.2
+python-dotenv==0.20.0
+pandas==1.4.1

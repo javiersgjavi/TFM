@@ -1,11 +1,12 @@
 import gym
 import numpy as np
 from gym import spaces
+from models.Kmeans import Kmeans
 
 
 class MontezumaSimplified(gym.Env):
-    def __init__(self, goals, goal_reward, death_penalty, episode_limit, margin):
-        super(MontezumaIntrinsic, self).__init__()
+    def __init__(self, goals, goal_reward, death_penalty, episode_limit, margin, steps_kmeans):
+        super(MontezumaSimplified, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')
         self.goals = goals
         self.current_goal = None
@@ -17,11 +18,18 @@ class MontezumaSimplified(gym.Env):
         self.observation_space = spaces.Box(low=0, high=255, shape=(130,), dtype=np.uint8)
         self.life = 0
         self.margin = margin
+        self.steps_last_kmeans = 0
+        self.kmeans = Kmeans(k=len(self.goals), memory_size=10 ** 6)
+        self.steps_kmeans = steps_kmeans
+        self.steps = 0
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
         i_observation = self.get_intrinsic_state(observation)
         i_reward, done = self.get_intrinsic_reward(i_observation, reward, done)
+        if i_reward >= 0:
+            self.kmeans.store_experience(self.get_position(observation))
+        self.train_kmeans()
         return i_observation, i_reward, done, info
 
     def reset(self):
@@ -50,6 +58,14 @@ class MontezumaSimplified(gym.Env):
         i_observation = np.concatenate([observation, self.current_goal], axis=0)
         return i_observation
 
+    def train_kmeans(self):
+        self.steps += 1
+        if self.steps - self.steps_last_kmeans >= self.steps_kmeans:
+            print(f'Last goals: {self.goals}')
+            self.goals = self.kmeans.fit(self.goals)
+            print(f'New goals: {self.goals}')
+            self.steps_last_kmeans = self.steps
+
     def get_intrinsic_reward(self, observation, reward, done):
         life = self.get_life(observation)
         position = self.get_position(observation)
@@ -69,3 +85,6 @@ class MontezumaSimplified(gym.Env):
             reward = self.death_penalty
 
         return reward, done
+
+    def get_goals(self):
+        return self.goals

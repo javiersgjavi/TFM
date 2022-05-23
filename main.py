@@ -13,7 +13,7 @@ def main(args):
         experiment = Taxi()
 
     if job == 0:
-        experiment.train()
+        experiment.train(steps=10*2)
     elif job == 1:
         experiment.test()
 

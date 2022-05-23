@@ -15,7 +15,7 @@ class MontezumaHierarchical(gym.Env):
         self.observation_space = self.env.observation_space.n
         self.margin = margin
         self.last_state = None
-        self.step_kmeans = memory_kmeans
+        self.step_kmeans = steps_kmeans
         self.kmeans = Kmeans(k=len(self.goals), memory_size=10**6)
         self.life = None
         self.steps_last_kmeans = 0

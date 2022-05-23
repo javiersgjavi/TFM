@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+
+ tfm_intrinsico_api:
+  build: .
+  volumes:
+   - ./:/TFM-intrinsico/
+  stdin_open: true
+  tty: true
+  deploy:
+   resources:
+    reservations:
+     devices:
+      - capabilities: [gpu]
