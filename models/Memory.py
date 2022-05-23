@@ -13,7 +13,10 @@ class MemoryKmeans:
         self.index += 1
 
     def get_stored_experiences(self):
-        return self.states
+        res = self.states
+        if self.index < self.size:
+            res = self.states[:self.index]
+        return res
 
 
 class MemoryPPO:
