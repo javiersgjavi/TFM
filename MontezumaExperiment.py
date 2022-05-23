@@ -61,7 +61,7 @@ class Montezuma:
                 'goals': self.goals_detected,
                 'margin': self.margin,
                 'steps_kmeans': self.steps_kmeans,
-                'limit_same_position': 500,
+                'limit_same_position': 20,
             }
         )
 
