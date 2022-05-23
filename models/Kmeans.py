@@ -25,12 +25,15 @@ class Kmeans:
 
         return experience_set, goals
 
-    def fit(self, goals):
+    def fit(self, goals, first=False):
         experience_set = self.memory.get_stored_experiences()
 
         experience_set, centroids = self.normalize_experiences(experience_set, goals)
 
-        kmeans = KMeans(n_clusters=self.k, max_iter=self.max_iterations, init=centroids, n_init=1)
+        if not first:
+            kmeans = KMeans(n_clusters=self.k, max_iter=self.max_iterations, init=centroids, n_init=1)
+        else:
+            kmeans = KMeans(n_clusters=self.k, max_iter=self.max_iterations)
 
         kmeans.fit(experience_set)
 
