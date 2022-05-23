@@ -16,11 +16,13 @@ class MontezumaHierarchical(gym.Env):
         self.observation_space = self.env.observation_space
         self.margin = margin
         self.last_state = None
+        self.last_info = None
         self.step_kmeans = steps_kmeans
         self.kmeans = Kmeans(k=len(self.goals), memory_size=10**6)
         self.life = None
         self.steps_last_kmeans = 0
         self.steps = 0
+        self.episode=0
 
     def step(self, action):
 
@@ -29,7 +31,6 @@ class MontezumaHierarchical(gym.Env):
         rewards = []
         i_state = self.get_intrinsic_state(state)
         done = False
-        info = None
         while self.get_distance_goal(i_state) > self.margin and not done:
             action, _states = self.controller.predict(i_state)
             state, reward, done, info = self.env.step(action)
@@ -37,7 +38,8 @@ class MontezumaHierarchical(gym.Env):
 
             i_state = self.get_intrinsic_state(state)
             life = self.get_life(state)
-            print(self.get_position(state), self.current_goal, life, done)
+            self.last_info = info
+            #print(self.get_position(state), self.current_goal, life, done, info)
 
             if self.life == life:
                 self.kmeans.store_experience(self.get_position(state))
@@ -47,7 +49,10 @@ class MontezumaHierarchical(gym.Env):
             self.train_kmeans()
 
         self.last_state = state
-        return state, np.sum(rewards), done, info
+        self.episode += 1
+        print(self.episode)
+
+        return state, np.sum(rewards), done, self.last_info
 
     def reset(self):
         observation = self.env.reset()
