@@ -2,17 +2,18 @@ import gym
 import numpy as np
 from gym import spaces
 from models.Kmeans import Kmeans
+from stable_baselines3 import PPO
 
 
 class MontezumaHierarchical(gym.Env):
     def __init__(self, goals, margin, steps_kmeans):
-        super(MontezumaIntrinsic, self).__init__()
+        super(MontezumaHierarchical, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')
         self.controller = PPO.load('./weights_controller/montezuma')
         self.goals = goals
         self.current_goal = None
-        self.action_space = Discrete(len(self.goals))
-        self.observation_space = self.env.observation_space.n
+        self.action_space = spaces.Discrete(len(self.goals))
+        self.observation_space = self.env.observation_space
         self.margin = margin
         self.last_state = None
         self.step_kmeans = steps_kmeans
@@ -23,22 +24,23 @@ class MontezumaHierarchical(gym.Env):
 
     def step(self, action):
 
-        goal = self.goals[action]
+        self.current_goal = self.goals[action]
         state = self.last_state
         rewards = []
-        i_state = self.get_intrinsic_state(state, goal)
+        i_state = self.get_intrinsic_state(state)
 
         while self.get_distance_goal(i_state) > self.margin or done:
-            action = self.controller.predict(i_state)
+            action, _states = self.controller.predict(i_state)
             state, reward, done, info = self.env.step(action)
             rewards.append(reward)
 
-            i_state = self.get_intrinsic_state(observation, goal)
+            i_state = self.get_intrinsic_state(state)
             life = self.get_life(state)
-            if self.life == state:
-                self.kmeans.store(self.get_position(state))
 
-            self.life = life
+            if self.life == life:
+                self.kmeans.store_experience(self.get_position(state))
+            else:
+                self.life = life
 
             self.train_kmeans()
 
