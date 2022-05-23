@@ -28,15 +28,16 @@ class MontezumaHierarchical(gym.Env):
         state = self.last_state
         rewards = []
         i_state = self.get_intrinsic_state(state)
-
-        while self.get_distance_goal(i_state) > self.margin or done:
+        done = False
+        info = None
+        while self.get_distance_goal(i_state) > self.margin and not done:
             action, _states = self.controller.predict(i_state)
             state, reward, done, info = self.env.step(action)
             rewards.append(reward)
 
             i_state = self.get_intrinsic_state(state)
             life = self.get_life(state)
-            print(self.get_position(state), self.current_goal)
+            print(self.get_position(state), self.current_goal, life, done)
 
             if self.life == life:
                 self.kmeans.store_experience(self.get_position(state))
