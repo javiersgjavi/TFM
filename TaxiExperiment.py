@@ -121,7 +121,6 @@ class Taxi:
 
             action, _states = model.predict(state)
             state, reward, done, info = env.render_step(action)
-            print(reward)
 
     def check_anomaly(self, position, goals):
         res = True
