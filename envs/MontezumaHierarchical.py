@@ -35,11 +35,12 @@ class MontezumaHierarchical(gym.Env):
         i_state = self.get_intrinsic_state(state)
         done = False
         self.last_position = self.get_position(state)
-        while self.get_distance_goal(i_state) > self.margin and not done:
+        stop_action = False
+        while self.get_distance_goal(i_state) > self.margin and not done and not stop_action:
             action, _states = self.controller.predict(i_state)
             state, reward, done, info = self.env.step(action)
             position = self.get_position(state)
-            reward, done = self.check_same_position(position, reward, done)
+            reward, stop_action = self.check_same_position(position, reward)
             rewards.append(reward)
 
             i_state = self.get_intrinsic_state(state)
@@ -96,18 +97,18 @@ class MontezumaHierarchical(gym.Env):
             self.goals = self.kmeans.fit(self.goals)
             self.steps_last_kmeans = self.steps
 
-    def check_same_position(self, position, reward, done):
-        if not done:
-            if position[0] == self.last_position[0] and position[1] == self.last_position[1]:
-                self.steps_same_position += 1
-            else:
-                self.steps_same_position = 0
-                self.last_position = position
+    def check_same_position(self, position, reward):
+        stop_action = False
 
-            if self.steps_same_position >= self.limit_same_position:
-                done = True
-                reward = -10
-                self.steps_same_position = 0
+        if position[0] == self.last_position[0] and position[1] == self.last_position[1]:
+            self.steps_same_position += 1
+        else:
+            self.steps_same_position = 0
+            self.last_position = position
 
+        if self.steps_same_position >= self.limit_same_position:
+            reward = -10
+            stop_action = True
+            self.steps_same_position = 0
 
-        return reward, done
+        return reward, stop_action
