@@ -24,7 +24,7 @@ class Montezuma:
         gym.envs.register(
             id=self.env_controller,
             entry_point='envs.MontezumaSimplified:MontezumaSimplified',
-            max_episode_steps=20,
+            max_episode_steps=500,
             kwargs={
                 'goals': self.generate_random_goals(),
                 'goal_reward': 100,
