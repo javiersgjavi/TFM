@@ -16,7 +16,7 @@ class TaxiHierarchical(gym.Env):
         self.observation_space = spaces.Box(low=0, high=4, shape=(4,), dtype=np.uint8)
         self.last_state = None
 
-    def step(self, action, render=False):
+    def step(self, action):
         goal = self.goals[action]
         state = self.last_state
         i_state = self.get_intrinsic_state(state, goal)
@@ -29,11 +29,27 @@ class TaxiHierarchical(gym.Env):
             state = self.decode(state)
             total_rewards.append(reward)
             i_state = self.get_intrinsic_state(state, goal)
-            if render:
-                self.render()
-                print(i_state, reward)
-                time.sleep(0.1)
 
+        self.last_state = state
+
+        return state, np.sum(total_rewards), done, info
+
+    def render_step(self, action):
+        goal = self.goals[action]
+        state = self.last_state
+        i_state = self.get_intrinsic_state(state, goal)
+        done = False
+        total_rewards = []
+        action = -1
+        while not (np.array_equal(state[:2], goal[:2]) and (action == 4 or action == 5)):
+            action, _states = self.controller.predict(i_state)
+            state, reward, done, info = self.env.step(action)
+            state = self.decode(state)
+            total_rewards.append(reward)
+            i_state = self.get_intrinsic_state(state, goal)
+            self.render()
+            print(i_state[:2], goal,  reward)
+            time.sleep(0.1)
 
         self.last_state = state
 

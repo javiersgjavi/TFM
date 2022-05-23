@@ -103,7 +103,6 @@ class Taxi:
 
     def test(self):
         goals = np.load('./goals_detected/trained_goals.npy')
-        print(goals)
 
         gym.envs.register(
             id=self.env_meta_controller,
@@ -114,11 +113,14 @@ class Taxi:
 
         model = PPO.load(f'{self.path_w_meta_controller}/taxi')
         env = gym.make(self.env_meta_controller)
+        done = True
 
-        state = env.reset()
         while True:
+            if done:
+                state = env.reset()
+
             action, _states = model.predict(state)
-            state, reward, done, info = env.step(action, render=True)
+            state, reward, done, info = env.render_step(action)
             print(reward)
 
     def check_anomaly(self, position, goals):
