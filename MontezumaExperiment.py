@@ -60,7 +60,8 @@ class Montezuma:
             kwargs={
                 'goals': self.goals_detected,
                 'margin': self.margin,
-                'steps_kmeans': self.steps_kmeans
+                'steps_kmeans': self.steps_kmeans,
+                'limit_same_position': 500,
             }
         )
 

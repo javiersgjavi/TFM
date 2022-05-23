@@ -6,7 +6,7 @@ from stable_baselines3 import PPO
 
 
 class MontezumaHierarchical(gym.Env):
-    def __init__(self, goals, margin, steps_kmeans):
+    def __init__(self, goals, margin, steps_kmeans, limit_same_position):
         super(MontezumaHierarchical, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')
         self.controller = PPO.load('./weights_controller/montezuma')
@@ -18,11 +18,14 @@ class MontezumaHierarchical(gym.Env):
         self.last_state = None
         self.last_info = None
         self.step_kmeans = steps_kmeans
-        self.kmeans = Kmeans(k=len(self.goals), memory_size=10**6)
+        self.kmeans = Kmeans(k=len(self.goals), memory_size=10 ** 6)
         self.life = None
         self.steps_last_kmeans = 0
         self.steps = 0
-        self.episode=0
+        self.episode = 0
+        self.last_position = None
+        self.limit_same_position = limit_same_position
+        self.steps_same_position = 0
 
     def step(self, action):
 
@@ -31,18 +34,22 @@ class MontezumaHierarchical(gym.Env):
         rewards = []
         i_state = self.get_intrinsic_state(state)
         done = False
+        self.last_position = self.get_position(state)
         while self.get_distance_goal(i_state) > self.margin and not done:
             action, _states = self.controller.predict(i_state)
             state, reward, done, info = self.env.step(action)
+            position = self.get_position(state)
+            reward, done = self.check_same_position(position, reward, done)
             rewards.append(reward)
 
             i_state = self.get_intrinsic_state(state)
             life = self.get_life(state)
             self.last_info = info
-            #print(self.get_position(state), self.current_goal, life, done, info)
+
+            # print(self.get_position(position), self.current_goal, life, done, info)
 
             if self.life == life:
-                self.kmeans.store_experience(self.get_position(state))
+                self.kmeans.store_experience(position)
             else:
                 self.life = life
 
@@ -89,22 +96,18 @@ class MontezumaHierarchical(gym.Env):
             self.goals = self.kmeans.fit(self.goals)
             self.steps_last_kmeans = self.steps
 
-    def get_intrinsic_reward(self, observation, reward, done):
-        life = self.get_life(observation)
-        position = self.get_position(observation)
-        distance = np.linalg.norm(self.current_goal - position)
-        reward = np.min(reward, -1)
-        self.steps_without_reward += 1
+    def check_same_position(self, position, reward, done):
+        if not done:
+            if position[0] == self.last_position[0] and position[1] == self.last_position[1]:
+                self.steps_same_position += 1
+            else:
+                self.steps_same_position = 0
+                self.last_position = position
 
-        if distance <= self.margin:
-            reward = self.goal_reward
-            done = True
+            if self.steps_same_position >= self.limit_same_position:
+                done = True
+                reward = -10
+                self.steps_same_position = 0
 
-        elif self.steps_without_reward == self.episode_limit:
-            reward = self.death_penalty // 2
-            done = True
-
-        elif life == self.life - 1:
-            reward = self.death_penalty
 
         return reward, done
