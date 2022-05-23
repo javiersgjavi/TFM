@@ -1,6 +1,6 @@
 import argparse
 from TaxiExperiment import Taxi
-from Montezuma import Montezuma
+from MontezumaExperiment import Montezuma
 
 
 def main(args):

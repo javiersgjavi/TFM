@@ -14,6 +14,7 @@ class Montezuma:
         self.goals_detected = np.zeros((self.num_goals, 2))
         self.path_w_controller = './weights_controller/'
         self.path_w_meta_controller = './weights_metacontroller/'
+        self.path_goals_detected = './goals_detected/'
         self.goals_detected = None
         self.margin = margin
         self.steps_kmeans = steps_kmeans
@@ -43,10 +44,14 @@ class Montezuma:
             os.makedirs(self.path_w_controller)
 
         model.save(f'{self.path_w_controller}/montezuma')
-        self.goals_detected = env.get_goals()
+        if not os.path.exists(self.path_goals_detected):
+            os.makedirs(self.path_goals_detected)
+
+        np.save(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy', env.get_goals())
 
     def unified_learning(self, steps):
         print('[INFO] Starting unified learning...')
+        self.goals_detected = np.load(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy')
 
         gym.envs.register(
             id=self.env_meta_controller,
