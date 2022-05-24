@@ -13,7 +13,7 @@ def main(args):
         experiment = Taxi()
 
     if job == 0:
-        experiment.intrinsic_learning(steps=5*10**5)
+        experiment.intrinsic_learning(steps=8*10**5)
     elif job == 1:
         experiment.test()
 

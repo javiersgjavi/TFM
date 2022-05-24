@@ -41,7 +41,7 @@ class Montezuma:
         buffer_size = 300
         env = gym.make(self.env_controller)
         model = PPOAgent(
-            env_name='taxi',
+            env_name='montezuma',
             num_states=env.observation_space.shape[0],
             num_actions=env.action_space.n,
             lr=0.003,
