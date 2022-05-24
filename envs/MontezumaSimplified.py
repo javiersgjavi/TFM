@@ -91,3 +91,6 @@ class MontezumaSimplified(gym.Env):
 
     def get_goals(self):
         return self.goals
+
+    def get_kmeans(self):
+        return self.kmeans

@@ -1,5 +1,6 @@
 import os
 import gym
+import pickle
 import numpy as np
 
 from stable_baselines3 import PPO
@@ -20,6 +21,7 @@ class Montezuma:
         self.goals_detected = None
         self.margin = margin
         self.steps_kmeans = steps_kmeans
+        self.kmeans = None
 
     def intrinsic_learning(self, steps):
         print('[INFO] Starting intrinsic learning...')
@@ -70,7 +72,8 @@ class Montezuma:
                 rewards.append(reward_ep)
                 long.append(episode_len)
                 episode_len, reward_ep = 0, 0
-                print(f'step: {step} | ep_rew_mean: {round(np.mean(rewards[-100:]))} | ep_len_mean: {round(np.mean(long[-100:]))}')
+                print(
+                    f'step: {step} | ep_rew_mean: {round(np.mean(rewards[-100:]))} | ep_len_mean: {round(np.mean(long[-100:]))}')
 
             state = state.reshape((-1, state.shape[0]))
             action, action_onehot, prediction = model.act(state)
@@ -89,10 +92,18 @@ class Montezuma:
             os.makedirs(self.path_goals_detected)
 
         np.save(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy', env.get_goals())
+        self.kmeans = env.get_kmeans()
 
-    def unified_learning(self, steps):
+        with open('./goals_detected/kmeans_memory', 'wb') as file:
+            pickle.dump(self.kmeans, file)
+
+    def unified_learning(self, steps, load_kmeans=False):
         print('[INFO] Starting unified learning...')
         self.goals_detected = np.load(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy')
+        if load_kmeans:
+            if self.kmeans is None:
+                with open('./goals_detected/kmeans_memory', 'rb') as file:
+                    self.kmeans = pickle.load(file)
 
         gym.envs.register(
             id=self.env_meta_controller,
@@ -125,6 +136,9 @@ class Montezuma:
 
         if not os.path.exists('./goals_detected/'):
             os.makedirs('./goals_detected/')
+
+        with open('./goals_detected/kmeans_memory', 'wb') as file:
+            pickle.dump(self.kmeans, file)
 
         np.save('./goals_detected/trained_goals.npy', self.goals_detected)
 
