@@ -103,7 +103,9 @@ class MontezumaHierarchical(gym.Env):
     def train_kmeans(self):
         self.steps += 1
         if self.steps - self.steps_last_kmeans >= self.step_kmeans:
+            print(f'Last goals: {self.goals}')
             self.goals = self.kmeans.fit(self.goals)
+            print(f'New goals: {self.goals}')
             self.steps_last_kmeans = self.steps
 
     def check_same_position(self, position, reward):
