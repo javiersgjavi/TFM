@@ -1,7 +1,9 @@
 import os
 import gym
 import numpy as np
+
 from stable_baselines3 import PPO
+from models.Models_PPO import PPOAgent
 from stable_baselines3.common.env_util import make_vec_env
 
 
@@ -36,14 +38,53 @@ class Montezuma:
             }
         )
 
+        buffer_size = 300
         env = gym.make(self.env_controller)
-        model = PPO('MlpPolicy', env, verbose=1)
-        model.learn(total_timesteps=steps)
+        model = PPOAgent(
+            env_name='taxi',
+            num_states=env.observation_space.shape[0],
+            num_actions=env.action_space.n,
+            lr=0.003,
+            epochs=10,
+            batch_size=64,
+            shuffle=True,
+            buffer_size=buffer_size,
+            loss_clipping=0.2,
+            entropy_loss=0.001,
+            gamma=0.99,
+            lambda_=0.95,
+            normalize=True
+        )
+
+        done = True
+        rewards, long = [], []
+        episode_len, reward_ep = 0, 0
+
+        for step in range(steps):
+
+            if step % buffer_size == 0 and step != 0:
+                model.replay()
+
+            if done:
+                state = env.reset()
+                rewards.append(reward_ep)
+                long.append(episode_len)
+                episode_len, reward_ep = 0, 0
+                print(np.mean(rewards[-100:]), np.mean(long[-100:]), step)
+
+            state = state.reshape((-1, state.shape[0]))
+            action, action_onehot, prediction = model.act(state)
+            next_state, reward, done, info = env.step(action)
+            model.store(state, action_onehot, reward, next_state, done, prediction)
+            state = next_state
+            episode_len += 1
+            reward_ep += reward
 
         if not os.path.exists(self.path_w_controller):
             os.makedirs(self.path_w_controller)
 
-        model.save(f'{self.path_w_controller}/montezuma')
+        model.save()
+
         if not os.path.exists(self.path_goals_detected):
             os.makedirs(self.path_goals_detected)
 
