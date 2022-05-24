@@ -70,7 +70,7 @@ class Montezuma:
                 rewards.append(reward_ep)
                 long.append(episode_len)
                 episode_len, reward_ep = 0, 0
-                print(np.mean(rewards[-100:]), np.mean(long[-100:]), step)
+                print(f'step: {step} | ep_rew_mean: {round(np.mean(rewards[-100:]), 2)} | ep_len_mean: {round(np.mean(long[-100:]))}')
 
             state = state.reshape((-1, state.shape[0]))
             action, action_onehot, prediction = model.act(state)
