@@ -2,14 +2,30 @@ import gym
 import numpy as np
 from gym import spaces
 from models.Kmeans import Kmeans
-from stable_baselines3 import PPO
+from models.Models_PPO import PPOAgent
 
 
 class MontezumaHierarchical(gym.Env):
-    def __init__(self, goals, margin, steps_kmeans, limit_same_position):
+    def __init__(self, goals, margin, steps_kmeans, limit_same_position, steps_limit, goal_reward, death_penalty, buffer_size):
         super(MontezumaHierarchical, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')
-        self.controller = PPO.load('./weights_controller/montezuma')
+        self.buffer_size = buffer_size
+        self.controller = PPOAgent(
+            env_name='montezuma',
+            num_states=self.env.observation_space.shape[0],
+            num_actions=self.env.action_space.n,
+            lr=0.003,
+            epochs=10,
+            batch_size=64,
+            shuffle=True,
+            buffer_size=self.buffer_size,
+            loss_clipping=0.2,
+            entropy_loss=0.001,
+            gamma=0.99,
+            lambda_=0.95,
+            normalize=True
+        )
+        self.controller.load()
         self.goals = goals
         self.current_goal = None
         self.action_space = spaces.Discrete(len(self.goals))
@@ -25,42 +41,53 @@ class MontezumaHierarchical(gym.Env):
         self.episode = 0
         self.last_position = None
         self.limit_same_position = limit_same_position
-        self.steps_same_position = 0
+        self.steps_without_reward = 0
+        self.steps_limit = steps_limit
         self.detected_goals = 0
+        self.goal_reward = goal_reward
+        self.death_penalty = death_penalty
 
     def step(self, action):
 
-        rewards = []
-        done = False
-        stop_action = False
-        state = self.last_state
-
         self.current_goal = self.goals[action]
-        i_state = self.get_intrinsic_state(state)
-        self.last_position = self.get_position(state)
 
-        while self.get_distance_goal(i_state) > self.margin and not done and not stop_action:
-
-            action, _states = self.controller.predict(i_state)
-            state, reward, done, info = self.env.step(action)
-            self.last_info = info
-
-            position = self.get_position(state)
-            self.check_anomaly(reward, position)
-
-            reward, stop_action = self.check_same_position(position, reward)
-            rewards.append(reward)
-
-            i_state = self.get_intrinsic_state(state)
-
-            self.store_experience_kmeans(state)
-            self.train_kmeans()
+        state, reward, done, info = self.controller_act()
 
         self.last_state = state
         self.episode += 1
+
         print(self.episode, self.steps)
 
-        return state, np.sum(rewards), done, self.last_info
+        return state, reward, done, info
+
+    def controller_act(self):
+
+        rewards = []
+        done = False
+        stop_controller = False
+
+        i_state = self.get_intrinsic_state(self.last_state)
+        self.last_position = self.get_position(i_state)
+        while self.get_distance_goal(i_state) > self.margin and not done and not stop_controller:
+
+            if self.step % self.buffer_size == 0 and self.steps != 0:
+                self.controller.replay()
+
+            action, action_onehot, prediction = self.controller.act(i_state)
+            next_state, reward, done, info = self.env.step(action)
+            self.last_info = info
+
+            i_next_state = self.get_intrinsic_state(next_state)
+            i_reward, stop_controller = self.get_intrinsic_reward(next_state, reward, done)
+
+            self.controller.store(i_state, action_onehot, i_reward, i_next_state, done, prediction)
+
+            i_state = i_next_state
+            rewards.append(reward)
+            self.store_experience_kmeans(next_state)
+            self.train_kmeans()
+
+        return next_state, np.sum(rewards), done, self.last_info
 
     def reset(self):
         observation = self.env.reset()
@@ -89,7 +116,7 @@ class MontezumaHierarchical(gym.Env):
 
     def get_intrinsic_state(self, observation):
         i_observation = np.concatenate([observation, self.current_goal], axis=0)
-        return i_observation
+        return i_observation.reshape((-1, i_observation.shape[0]))
 
     def store_experience_kmeans(self, state):
         position = self.get_position(state)
@@ -130,3 +157,23 @@ class MontezumaHierarchical(gym.Env):
             self.goals[index] = position
             self.detected_goals += 1
             print(f'{self.detected_goals} detected goals, new: {position}')
+
+    def get_intrinsic_reward(self, observation, reward, done):
+        life = self.get_life(observation)
+        position = self.get_position(observation)
+        distance = np.linalg.norm(self.current_goal - position)
+        reward = np.min(reward, -1)
+        self.steps_without_reward += 1
+
+        if distance <= self.margin:
+            reward = self.goal_reward
+            done = True
+
+        elif self.steps_without_reward == self.steps_limit:
+            reward = self.death_penalty // 2
+            done = True
+
+        elif life == self.life - 1:
+            reward = self.death_penalty
+
+        return reward, done

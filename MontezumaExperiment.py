@@ -103,6 +103,10 @@ class Montezuma:
                 'margin': self.margin,
                 'steps_kmeans': self.steps_kmeans,
                 'limit_same_position': 20,
+                'steps_limit': 500,
+                'goal_reward': 100,
+                'death_penalty': -20,
+                'buffer_size': 2048
             }
         )
 

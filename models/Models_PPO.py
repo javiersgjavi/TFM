@@ -154,8 +154,8 @@ class PPOAgent:
         self.memory = MemoryPPO(memory_size=self.buffer_size, input_shape=self.num_states, action_size=self.num_actions)
 
     def load(self):
-        self.Actor.Actor.load_weights(self.Actor_name)
-        self.Critic.Critic.load_weights(self.Critic_name)
+        self.Actor.model.load_weights(self.Actor_name)
+        self.Critic.model.load_weights(self.Critic_name)
 
     def save(self):
         self.Actor.model.save_weights(self.Actor_name)

@@ -77,12 +77,15 @@ class MontezumaSimplified(gym.Env):
             reward = self.goal_reward
             done = True
 
-        elif self.steps_without_reward == self.episode_limit:
+        elif self.steps_without_reward >= self.episode_limit:
             reward = self.death_penalty // 2
             done = True
 
         elif life == self.life - 1:
             reward = self.death_penalty
+
+        if done:
+            self.steps_without_reward = 0
 
         return reward, done
 
