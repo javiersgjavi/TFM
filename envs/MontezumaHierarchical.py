@@ -67,7 +67,7 @@ class MontezumaHierarchical(gym.Env):
         stop_controller = False
 
         i_state = self.get_intrinsic_state(self.last_state)
-        self.last_position = self.get_position(i_state)
+        self.last_position = self.get_position(self.last_state)
         while self.get_distance_goal(i_state) > self.margin and not done and not stop_controller:
 
             if self.step % self.buffer_size == 0 and self.steps != 0:
