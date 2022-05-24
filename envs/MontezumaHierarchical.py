@@ -71,7 +71,7 @@ class MontezumaHierarchical(gym.Env):
         next_state = self.last_state
         while self.get_distance_goal(next_state) > self.margin and not done and not stop_controller:
 
-            if self.step % self.buffer_size == 0 and self.steps != 0:
+            if self.steps % self.buffer_size == 0 and self.steps != 0:
                 self.controller.replay()
 
             action, action_onehot, prediction = self.controller.act(i_state)
