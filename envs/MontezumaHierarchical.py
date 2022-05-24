@@ -26,34 +26,34 @@ class MontezumaHierarchical(gym.Env):
         self.last_position = None
         self.limit_same_position = limit_same_position
         self.steps_same_position = 0
+        self.detected_goals = 0
 
     def step(self, action):
 
-        self.current_goal = self.goals[action]
-        state = self.last_state
         rewards = []
-        i_state = self.get_intrinsic_state(state)
         done = False
-        self.last_position = self.get_position(state)
         stop_action = False
+        state = self.last_state
+
+        self.current_goal = self.goals[action]
+        i_state = self.get_intrinsic_state(state)
+        self.last_position = self.get_position(state)
+
         while self.get_distance_goal(i_state) > self.margin and not done and not stop_action:
+
             action, _states = self.controller.predict(i_state)
             state, reward, done, info = self.env.step(action)
+            self.last_info = info
+
             position = self.get_position(state)
+            self.check_anomaly(reward, position)
+
             reward, stop_action = self.check_same_position(position, reward)
             rewards.append(reward)
 
             i_state = self.get_intrinsic_state(state)
-            life = self.get_life(state)
-            self.last_info = info
 
-            # print(self.get_position(position), self.current_goal, life, done, info)
-
-            if self.life == life:
-                self.kmeans.store_experience(position)
-            else:
-                self.life = life
-
+            self.store_experience_kmeans(state)
             self.train_kmeans()
 
         self.last_state = state
@@ -91,6 +91,15 @@ class MontezumaHierarchical(gym.Env):
         i_observation = np.concatenate([observation, self.current_goal], axis=0)
         return i_observation
 
+    def store_experience_kmeans(self, state):
+        position = self.get_position(state)
+        life = self.get_life(state)
+
+        if self.life == life:
+            self.kmeans.store_experience(position)
+        else:
+            self.life = life
+
     def train_kmeans(self):
         self.steps_last_kmeans += 1
         if self.steps - self.steps_last_kmeans >= self.step_kmeans:
@@ -112,3 +121,10 @@ class MontezumaHierarchical(gym.Env):
             self.steps_same_position = 0
 
         return reward, stop_action
+
+    def check_anomaly(self, reward, position):
+        if reward > 0:
+            index = np.random.randint(len(self.goals))
+            self.goals[index] = position
+            self.detected_goals += 1
+            print(f'{self.detected_goals} detected goals, new: {position}')
