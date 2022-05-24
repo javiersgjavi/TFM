@@ -6,7 +6,7 @@ from models.Models_PPO import PPOAgent
 
 
 class MontezumaHierarchical(gym.Env):
-    def __init__(self, goals, margin, steps_kmeans, limit_same_position, steps_limit, goal_reward, death_penalty, buffer_size, load_kmeans=None):
+    def __init__(self, goals, margin, steps_kmeans, limit_same_position, steps_limit, goal_reward, death_penalty, buffer_size, kmeans=None):
         super(MontezumaHierarchical, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')
         self.buffer_size = buffer_size
@@ -34,10 +34,12 @@ class MontezumaHierarchical(gym.Env):
         self.last_state = None
         self.last_info = None
         self.step_kmeans = steps_kmeans
-        if load_kmeans is None:
+
+        if kmeans is None:
             self.kmeans = Kmeans(k=len(self.goals), memory_size=10 ** 6)
         else:
-            self.kmeans = load_kmeans
+            self.kmeans = kmeans
+
         self.life = None
         self.steps_last_kmeans = 0
         self.steps = 0

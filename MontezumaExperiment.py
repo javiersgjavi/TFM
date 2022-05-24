@@ -117,7 +117,8 @@ class Montezuma:
                 'steps_limit': 500,
                 'goal_reward': 100,
                 'death_penalty': -20,
-                'buffer_size': 2048
+                'buffer_size': 2048,
+                'kmeans': self.kmeans
             }
         )
 
