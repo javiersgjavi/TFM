@@ -58,7 +58,7 @@ class MontezumaHierarchical(gym.Env):
 
         self.last_state = state
         self.episode += 1
-        print(self.episode)
+        print(self.episode, self.steps)
 
         return state, np.sum(rewards), done, self.last_info
 
@@ -101,7 +101,7 @@ class MontezumaHierarchical(gym.Env):
             self.life = life
 
     def train_kmeans(self):
-        self.steps_last_kmeans += 1
+        self.steps += 1
         if self.steps - self.steps_last_kmeans >= self.step_kmeans:
             self.goals = self.kmeans.fit(self.goals)
             self.steps_last_kmeans = self.steps
