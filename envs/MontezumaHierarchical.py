@@ -12,7 +12,7 @@ class MontezumaHierarchical(gym.Env):
         self.buffer_size = buffer_size
         self.controller = PPOAgent(
             env_name='montezuma',
-            num_states=self.env.observation_space.shape[0],
+            num_states=self.env.observation_space.shape[0]+2,
             num_actions=self.env.action_space.n,
             lr=0.003,
             epochs=10,
@@ -69,7 +69,7 @@ class MontezumaHierarchical(gym.Env):
         i_state = self.get_intrinsic_state(self.last_state)
         self.last_position = self.get_position(self.last_state)
         next_state = self.last_state
-        print(self.last_state.shape, i_state.shape)
+        #print(self.last_state.shape, i_state.shape)
         while self.get_distance_goal(next_state) > self.margin and not done and not stop_controller:
 
             if self.steps % self.buffer_size == 0 and self.steps != 0:
