@@ -4,12 +4,11 @@ import pickle
 import numpy as np
 
 from stable_baselines3 import PPO
-from models.Models_PPO import PPOAgent
 from stable_baselines3.common.env_util import make_vec_env
 
 
 class Montezuma:
-    def __init__(self, num_goals=10, margin=5, steps_kmeans=10 ** 5):
+    def __init__(self, num_goals=10, margin=5, steps_kmeans=2 * 10 ** 5):
 
         self.num_goals = num_goals
         self.env_controller = 'MontezumaSimplified-v0'
@@ -23,7 +22,7 @@ class Montezuma:
         self.steps_kmeans = steps_kmeans
         self.kmeans = None
 
-    def intrinsic_learning(self, steps):
+    def intrinsic_learning(self, steps, n_envs=2):
         print('[INFO] Starting intrinsic learning...')
 
         gym.envs.register(
@@ -40,62 +39,17 @@ class Montezuma:
             }
         )
 
-        buffer_size = 300
-        env = gym.make(self.env_controller)
-        model = PPOAgent(
-            env_name='montezuma',
-            num_states=env.observation_space.shape[0],
-            num_actions=env.action_space.n,
-            lr=0.003,
-            epochs=10,
-            batch_size=64,
-            shuffle=True,
-            buffer_size=buffer_size,
-            loss_clipping=0.2,
-            entropy_loss=0.001,
-            gamma=0.99,
-            lambda_=0.95,
-            normalize=True
-        )
-
-        done = True
-        rewards, long = [], []
-        episode_len, reward_ep = 0, 0
-
-        for step in range(steps):
-
-            if step % buffer_size == 0 and step != 0:
-                model.replay()
-
-            if done:
-                state = env.reset()
-                rewards.append(reward_ep)
-                long.append(episode_len)
-                episode_len, reward_ep = 0, 0
-                print(
-                    f'step: {step} | ep_rew_mean: {round(np.mean(rewards[-100:]))} | ep_len_mean: {round(np.mean(long[-100:]))}')
-
-            state = state.reshape((-1, state.shape[0]))
-            action, action_onehot, prediction = model.act(state)
-            next_state, reward, done, info = env.step(action)
-            model.store(state, action_onehot, reward, next_state, done, prediction)
-            state = next_state
-            episode_len += 1
-            reward_ep += reward
+        envs = make_vec_env(self.env_controller, n_envs=n_envs)
+        model = PPO('MlpPolicy', envs, verbose=1)
+        model.learn(total_timesteps=steps)
 
         if not os.path.exists(self.path_w_controller):
             os.makedirs(self.path_w_controller)
+        model.save(f'{self.path_w_controller}/montezuma')
 
-        model.save()
-
-        if not os.path.exists(self.path_goals_detected):
-            os.makedirs(self.path_goals_detected)
-
-        np.save(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy', env.get_goals())
-        self.kmeans = env.get_kmeans()
-
-        with open('./goals_detected/kmeans_memory', 'wb') as file:
-            pickle.dump(self.kmeans, file)
+        #if not os.path.exists(self.path_goals_detected):
+        #    os.makedirs(self.path_goals_detected)
+        #np.save(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy', env.get_goals())
 
     def unified_learning(self, steps, load_kmeans=False):
         print('[INFO] Starting unified learning...')

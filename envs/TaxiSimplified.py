@@ -60,7 +60,7 @@ class TaxiSimplified(gym.Env):
             reward = self.death_penalty
 
         elif same_place:
-            reward = self.death_penalty // 4
+            reward = self.death_penalty // 5
 
         elif self.steps_without_reward == self.episode_limit:
             done = True

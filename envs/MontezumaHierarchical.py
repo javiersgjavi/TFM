@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from gym import spaces
 from models.Kmeans import Kmeans
-from models.Models_PPO import PPOAgent
+from stable_baselines3 import PPO
 
 
 class MontezumaHierarchical(gym.Env):
@@ -10,21 +10,7 @@ class MontezumaHierarchical(gym.Env):
         super(MontezumaHierarchical, self).__init__()
         self.env = gym.make('MontezumaRevenge-ram-v4')
         self.buffer_size = buffer_size
-        self.controller = PPOAgent(
-            env_name='montezuma',
-            num_states=self.env.observation_space.shape[0]+2,
-            num_actions=self.env.action_space.n,
-            lr=0.003,
-            epochs=10,
-            batch_size=64,
-            shuffle=True,
-            buffer_size=self.buffer_size,
-            loss_clipping=0.2,
-            entropy_loss=0.001,
-            gamma=0.99,
-            lambda_=0.95,
-            normalize=True
-        )
+        self.controller = PPO.load('./weights_controller/montezuma')
         self.controller.load()
         self.goals = goals
         self.current_goal = None
@@ -55,7 +41,6 @@ class MontezumaHierarchical(gym.Env):
     def step(self, action):
 
         self.current_goal = self.goals[action]
-
         state, reward, done, info = self.controller_act()
 
         self.last_state = state
@@ -74,23 +59,18 @@ class MontezumaHierarchical(gym.Env):
         i_state = self.get_intrinsic_state(self.last_state)
         self.last_position = self.get_position(self.last_state)
         next_state = self.last_state
-        #print(self.last_state.shape, i_state.shape)
         while self.get_distance_goal(next_state) > self.margin and not done and not stop_controller:
 
-            if self.steps % self.buffer_size == 0 and self.steps != 0:
-                self.controller.replay()
-
-            action, action_onehot, prediction = self.controller.act(i_state)
+            action, _states = self.controller.predict(i_state)
             next_state, reward, done, info = self.env.step(action)
+            reward, stop_controller = self.check_same_position(next_state, reward)
             self.last_info = info
 
             i_next_state = self.get_intrinsic_state(next_state)
-            i_reward, stop_controller = self.get_intrinsic_reward(next_state, reward, done)
-
-            self.controller.store(i_state, action_onehot, i_reward, i_next_state, done, prediction)
 
             i_state = i_next_state
             rewards.append(reward)
+
             self.store_experience_kmeans(next_state)
             self.train_kmeans()
 
@@ -123,7 +103,7 @@ class MontezumaHierarchical(gym.Env):
 
     def get_intrinsic_state(self, observation):
         i_observation = np.concatenate([observation, self.current_goal], axis=0)
-        return i_observation.reshape((-1, i_observation.shape[0]))
+        return i_observation
 
     def store_experience_kmeans(self, state):
         position = self.get_position(state)
@@ -160,8 +140,7 @@ class MontezumaHierarchical(gym.Env):
 
     def check_anomaly(self, reward, position):
         if reward > 0:
-            index = np.random.randint(len(self.goals))
-            self.goals[index] = position
+            self.goals[self.detected_goals] = position
             self.detected_goals += 1
             print(f'{self.detected_goals} detected goals, new: {position}')
 

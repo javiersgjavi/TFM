@@ -91,7 +91,7 @@ class Taxi:
 
         np.save(f'{self.path_goals_detected}trained_taxi.npy', self.goals_detected)
 
-    def train(self, steps=5 * 10 ** 5, episodes=3 * 10 ** 5, n_envs=10):
+    def train(self, steps=6 * 10 ** 5, episodes=3 * 10 ** 5, n_envs=10):
         self.intrinsic_learning(steps, n_envs)
         self.unified_learning(episodes)
 
