@@ -10,7 +10,7 @@ class TaxiHierarchical(gym.Env):
     def __init__(self, goals):
         super(TaxiHierarchical, self).__init__()
         self.env = gym.make('Taxi-v3')
-        self.controller = PPO.load('./weights_controller/taxi/best_model')
+        self.controller = PPO.load('./weights_controller/taxi')
         self.goals = goals
         self.current_goal = None
         self.action_space = spaces.Discrete(len(self.goals))
