@@ -1,16 +1,17 @@
 import os
 import gym
+import pickle
 import argparse
 import numpy as np
 from stable_baselines3 import PPO
 from envs.TaxiSimplified import TaxiSimplified
-from envs.MontezumaSimplified import MontezumaSimplified
+from envs.MontezumaSimplified import MontezumaIntrinsic
 from stable_baselines3.common.env_util import make_vec_env
 
 
 def main(args):
     env_id = int(args.environment[0])
-    save_path = './weights/'
+    save_path = 'weights_controller/'
 
     if env_id == 0:
 
@@ -40,16 +41,17 @@ def main(args):
 
         gym.envs.register(
             id=name_id,
-            entry_point='envs.TaxiSimplified:TaxiSimplified',
+            entry_point='envs.Taxi_Intrinsic:TaxiSimplified',
             max_episode_steps=20,
             kwargs={
-                'goals': goals,
+                'goals': None,
                 'goal_reward': 100,
                 'death_penalty': -20,
                 'episode_limit': 12}
         )
 
     envs = make_vec_env(name_id, n_envs=10)
+
 
     model = PPO('MlpPolicy', envs, verbose=1)
     model.learn(total_timesteps=5 * 10 ** 5)
@@ -58,6 +60,10 @@ def main(args):
         os.makedirs(save_path)
 
     model.save(weight_path)
+
+    with open('./goals_detected/taxi', 'wb') as f:
+        pickle.dump(envs.get_attr('detected_goals'), f)
+
 
 
 if __name__ == '__main__':
