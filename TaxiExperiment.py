@@ -100,7 +100,60 @@ class Taxi:
 
         np.save('./goals_detected/trained_goals.npy', self.goals_detected)
 
-    def test(self):
+    def watch(self):
+
+        model, env, done = self.start_env_to_play()
+
+        state = env.reset()
+
+        while True:
+            if done:
+                state = env.reset()
+
+            action, _states = model.predict(state)
+            state, reward, done, info = env.render_step(action)
+
+    def test(self, episodes=10 ** 3):
+        print(f'[INFO] Starting test with {episodes} episodes')
+        model, env, done = self.start_env_to_play()
+
+        episode, reward_ep, size_ep = 0, 0, 0
+
+        ep_rew, ep_len = [], []
+        state = env.reset()
+
+        while episode < episodes:
+            if done:
+                ep_len.append(size_ep)
+                ep_rew.append(reward_ep)
+                episode += 1
+                reward_ep, size_ep = 0, 0
+                state = env.reset()
+                if episode % (episodes//10) == 0:
+                    print(f'Episode: {episode}')
+
+            action, _state = model.predict(state)
+            state, reward, done, _, steps = env.test_step(action)
+            reward_ep += reward
+            size_ep += steps
+
+        ep_len_mean = np.mean(ep_len)
+        ep_len_std = np.std(ep_len)
+
+        ep_rew_mean = np.mean(ep_rew)
+        ep_rew_std = np.std(ep_rew)
+
+        msg = f'[RESULTS TAXI] Rewards episode: {round(ep_rew_mean, 2)} ±{round(ep_rew_std, 2)} | ' \
+              f'Longitude episode {round(ep_len_mean, 2)} ±{round(ep_len_std, 2)}'
+
+        if not os.path.exists('./results/'):
+            os.makedirs('./results/')
+
+        with open('./results/taxi', 'w') as file:
+            file.write(msg)
+        print(msg)
+
+    def start_env_to_play(self):
         goals = np.load('./goals_detected/trained_goals.npy')
 
         gym.envs.register(
@@ -112,14 +165,8 @@ class Taxi:
 
         model = PPO.load(f'{self.path_w_meta_controller}/taxi')
         env = gym.make(self.env_meta_controller)
-        done = True
-
-        while True:
-            if done:
-                state = env.reset()
-
-            action, _states = model.predict(state)
-            state, reward, done, info = env.render_step(action)
+        done = False
+        return model, env, done
 
     def check_anomaly(self, position, goals):
         res = True
@@ -129,4 +176,3 @@ class Taxi:
                 res = False
                 break
         return res
-

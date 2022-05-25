@@ -19,6 +19,9 @@ def main(args):
         else:
             experiment.train()
     elif job == 1:
+        experiment.watch()
+
+    elif job == 2:
         experiment.test()
 
 
@@ -38,8 +41,8 @@ if __name__ == '__main__':
         "--job",
         nargs=1,
         default=['0'],
-        choices=['0', '1'],
-        help="job: 0=train, 1=test"
+        choices=['0', '1', '2'],
+        help="job: 0=train, 1=watch, 2=generate results data"
     )
     args = parser.parse_args()
     main(args)
