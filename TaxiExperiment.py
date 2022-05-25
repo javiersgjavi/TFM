@@ -30,8 +30,8 @@ class Taxi:
         )
 
         envs = make_vec_env(self.env_controller, n_envs=n_envs)
-        model = PPO('MlpPolicy', envs, verbose=1)
-        model.learn(total_timesteps=steps, n_steps=64)
+        model = PPO('MlpPolicy', envs, n_steps=1024, verbose=1)
+        model.learn(total_timesteps=steps)
 
         if not os.path.exists(self.path_w_controller):
             os.makedirs(self.path_w_controller)
@@ -51,8 +51,8 @@ class Taxi:
         )
 
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
-        model = PPO('MlpPolicy', envs, verbose=1)
-        model.learn(total_timesteps=steps, n_steps=64)
+        model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
+        model.learn(total_timesteps=steps)
 
         if not os.path.exists(self.path_w_meta_controller):
             os.makedirs(self.path_w_meta_controller)
@@ -91,7 +91,7 @@ class Taxi:
 
         np.save(f'{self.path_goals_detected}trained_taxi.npy', self.goals_detected)
 
-    def train(self, steps=6 * 10 ** 5, episodes=3 * 10 ** 5, n_envs=10):
+    def train(self, steps=4 * 10 ** 5, episodes=3 * 10 ** 5, n_envs=10):
         self.intrinsic_learning(steps, n_envs)
         self.unified_learning(episodes)
 

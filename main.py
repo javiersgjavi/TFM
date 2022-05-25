@@ -18,6 +18,7 @@ def main(args):
             experiment.unified_learning(steps=8*10**5, load_kmeans=True)
         else:
             experiment.train()
+            #experiment.unified_learning(steps=1 * 10 ** 5)
     elif job == 1:
         experiment.watch()
 
