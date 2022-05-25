@@ -3,7 +3,7 @@ import gym
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 
 
 class Taxi:
@@ -13,8 +13,8 @@ class Taxi:
         self.env_controller = 'TaxiSimplified-v0'
         self.env_meta_controller = 'TaxiHierarchical-v0'
         self.goals_detected = []
-        self.path_w_controller = './weights_controller/taxi/'
-        self.path_w_meta_controller = './weights_metacontroller/taxi/'
+        self.path_w_controller = './weights_controller/'
+        self.path_w_meta_controller = './weights_metacontroller/'
         self.path_goals_detected = './goals_detected/taxi'
 
     def intrinsic_learning(self, steps, n_envs=10):
@@ -34,9 +34,11 @@ class Taxi:
 
         envs = make_vec_env(self.env_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=1024, verbose=1)
-        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
-                                     log_path=self.path_w_controller, eval_freq=1024, verbose=0)
-        model.learn(total_timesteps=steps, callback=eval_callback)
+
+        callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=56, verbose=1)
+        model.learn(total_timesteps=steps, callback=callback_on_best)
+
+        model.save(f'{self.path_w_controller}/taxi')
 
     def unified_learning(self, steps, n_envs=10):
         self.explore_goals()
@@ -54,9 +56,8 @@ class Taxi:
 
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
-        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
-                                     log_path=self.path_w_controller, eval_freq=512, verbose=0)
-        model.learn(total_timesteps=steps, callback=eval_callback)
+        callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=4, verbose=1)
+        model.learn(total_timesteps=steps, callback=callback_on_best)
 
     def explore_goals(self):
         print('[INFO] Starting the exploration of the environment to find the goals')
@@ -162,7 +163,7 @@ class Taxi:
             kwargs={'goals': goals}
         )
 
-        model = PPO.load(f'{self.path_w_meta_controller}best_model')
+        model = PPO.load(f'{self.path_w_meta_controller}taxi')
         env = gym.make(self.env_meta_controller)
         done = False
         return model, env, done
