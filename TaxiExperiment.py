@@ -14,7 +14,7 @@ class Taxi:
         self.goals_detected = []
         self.path_w_controller = './weights_controller/'
         self.path_w_meta_controller = './weights_metacontroller/'
-        self.path_goals_detected = './goals_detected/taxi'
+        self.path_goals_detected = './goals_detected/'
 
     def intrinsic_learning(self, steps, n_envs=10):
         print('[INFO] Starting intrinsic learning...')
