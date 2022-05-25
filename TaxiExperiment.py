@@ -135,8 +135,6 @@ class Taxi:
             reward_ep += reward
             size_ep += steps
 
-            print(reward)
-            print(steps)
         ep_len_mean = np.mean(ep_len)
         ep_len_std = np.std(ep_len)
 
