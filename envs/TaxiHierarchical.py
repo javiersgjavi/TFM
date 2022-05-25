@@ -34,7 +34,7 @@ class TaxiHierarchical(gym.Env):
             print(i_state[:2], self.current_goal,  total_rewards[-1])
             time.sleep(0.1)
 
-        return state, np.sum(total_rewards), done, info
+        return self.last_state, np.sum(total_rewards), done, info
 
     def test_step(self, action):
         i_state, done, total_rewards, action = self.prepare_step(action)
