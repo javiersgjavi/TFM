@@ -31,7 +31,7 @@ class Taxi:
 
         envs = make_vec_env(self.env_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, verbose=1)
-        model.learn(total_timesteps=steps)
+        model.learn(total_timesteps=steps, n_steps=64)
 
         if not os.path.exists(self.path_w_controller):
             os.makedirs(self.path_w_controller)
@@ -52,7 +52,7 @@ class Taxi:
 
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, verbose=1)
-        model.learn(total_timesteps=steps)
+        model.learn(total_timesteps=steps, n_steps=64)
 
         if not os.path.exists(self.path_w_meta_controller):
             os.makedirs(self.path_w_meta_controller)
