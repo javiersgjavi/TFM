@@ -13,8 +13,11 @@ def main(args):
         experiment = Taxi()
 
     if job == 0:
-        experiment.intrinsic_learning(steps=int(7.8*10**5))
-        experiment.unified_learning(steps=8*10**5, load_kmeans=True)
+        if env_id == 0:
+            experiment.intrinsic_learning(steps=int(7.8*10**5))
+            experiment.unified_learning(steps=8*10**5, load_kmeans=True)
+        else:
+            experiment.train()
     elif job == 1:
         experiment.test()
 

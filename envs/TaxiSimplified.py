@@ -15,11 +15,13 @@ class TaxiSimplified(gym.Env):
         self.episode_limit = episode_limit
         self.action_space = self.env.action_space
         self.observation_space = spaces.Box(low=0, high=4, shape=(5,), dtype=np.uint8)
+        self.last_observation = None
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
         i_observation = self.get_intrinsic_state(observation)
         i_reward, done = self.calculate_reward(i_observation, action, done)
+        self.last_observation = i_observation
 
         return i_observation, i_reward, done, info
 
@@ -27,6 +29,7 @@ class TaxiSimplified(gym.Env):
         self.current_goal = self.generate_random_goal()
         observation = self.env.reset()
         i_observation = self.get_intrinsic_state(observation)
+        self.last_state = i_observation
         return i_observation
 
     def render(self, mode='human'):
@@ -46,6 +49,7 @@ class TaxiSimplified(gym.Env):
         drop = self.current_goal[-1] == 1
         reward = -1
         self.steps_without_reward += 1
+        same_place = np.array_equal(self.last_observation[:2], observation[:2])
 
         if in_place and ((pick and action == 4) or (drop and action == 5)):
             done = True
@@ -54,6 +58,9 @@ class TaxiSimplified(gym.Env):
         elif action == 4 or action == 5:
             done = True
             reward = self.death_penalty
+
+        elif same_place:
+            reward = self.death_penalty // 4
 
         elif self.steps_without_reward == self.episode_limit:
             done = True
