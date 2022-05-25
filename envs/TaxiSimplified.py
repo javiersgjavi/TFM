@@ -49,7 +49,7 @@ class TaxiSimplified(gym.Env):
         drop = self.current_goal[-1] == 1
         reward = -1
         self.steps_without_reward += 1
-        same_place = np.array_equal(self.last_observation[:2], observation[:2])
+        hit_wall = np.array_equal(self.last_observation[:2], observation[:2])
 
         if in_place and ((pick and action == 4) or (drop and action == 5)):
             done = True
@@ -59,8 +59,8 @@ class TaxiSimplified(gym.Env):
             done = True
             reward = self.death_penalty
 
-        elif same_place:
-            reward = self.death_penalty // 5
+        elif hit_wall:
+            reward = -2
 
         elif self.steps_without_reward == self.episode_limit:
             done = True
