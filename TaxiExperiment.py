@@ -35,7 +35,7 @@ class Taxi:
         envs = make_vec_env(self.env_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=1024, verbose=1)
         eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
-                                     log_path=self.path_w_controller, eval_freq=1024)
+                                     log_path=self.path_w_controller, eval_freq=1024, verbose=0)
         model.learn(total_timesteps=steps, callback=eval_callback)
 
     def unified_learning(self, steps, n_envs=10):
@@ -55,7 +55,7 @@ class Taxi:
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
         eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
-                                     log_path=self.path_w_controller, eval_freq=512)
+                                     log_path=self.path_w_controller, eval_freq=512, verbose=0)
         model.learn(total_timesteps=steps, callback=eval_callback)
 
     def explore_goals(self):
