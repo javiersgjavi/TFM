@@ -3,6 +3,7 @@ import gym
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.callbacks import EvalCallback
 
 
 class Taxi:
@@ -12,12 +13,14 @@ class Taxi:
         self.env_controller = 'TaxiSimplified-v0'
         self.env_meta_controller = 'TaxiHierarchical-v0'
         self.goals_detected = []
-        self.path_w_controller = './weights_controller/'
-        self.path_w_meta_controller = './weights_metacontroller/'
-        self.path_goals_detected = './goals_detected/'
+        self.path_w_controller = './weights_controller/taxi/'
+        self.path_w_meta_controller = './weights_metacontroller/taxi/'
+        self.path_goals_detected = './goals_detected/taxi'
 
     def intrinsic_learning(self, steps, n_envs=10):
         print('[INFO] Starting intrinsic learning...')
+        if not os.path.exists(self.path_w_controller):
+            os.makedirs(self.path_w_controller)
 
         gym.envs.register(
             id=self.env_controller,
@@ -31,17 +34,16 @@ class Taxi:
 
         envs = make_vec_env(self.env_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=1024, verbose=1)
-        model.learn(total_timesteps=steps)
-
-        if not os.path.exists(self.path_w_controller):
-            os.makedirs(self.path_w_controller)
-
-        model.save(f'{self.path_w_controller}/taxi')
+        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
+                                     log_path=self.path_w_controller, eval_freq=1024)
+        model.learn(total_timesteps=steps, callback=eval_callback)
 
     def unified_learning(self, steps, n_envs=10):
         self.explore_goals()
 
         print('[INFO] Starting unified learning...')
+        if not os.path.exists(self.path_w_meta_controller):
+            os.makedirs(self.path_w_meta_controller)
 
         gym.envs.register(
             id=self.env_meta_controller,
@@ -52,12 +54,9 @@ class Taxi:
 
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
-        model.learn(total_timesteps=steps)
-
-        if not os.path.exists(self.path_w_meta_controller):
-            os.makedirs(self.path_w_meta_controller)
-
-        model.save(f'{self.path_w_meta_controller}/taxi')
+        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
+                                     log_path=self.path_w_controller, eval_freq=512)
+        model.learn(total_timesteps=steps, callback=eval_callback)
 
     def explore_goals(self):
         print('[INFO] Starting the exploration of the environment to find the goals')
@@ -91,7 +90,7 @@ class Taxi:
 
         np.save(f'{self.path_goals_detected}trained_taxi.npy', self.goals_detected)
 
-    def train(self, steps=4 * 10 ** 5, episodes=3 * 10 ** 5, n_envs=10):
+    def train(self, steps=4 * 10 ** 5, episodes=int(1.6 * 10 ** 5), n_envs=10):
         self.intrinsic_learning(steps, n_envs)
         self.unified_learning(episodes)
 
@@ -129,7 +128,7 @@ class Taxi:
                 episode += 1
                 reward_ep, size_ep = 0, 0
                 state = env.reset()
-                if episode % (episodes//10) == 0:
+                if episode % (episodes // 10) == 0:
                     print(f'Episode: {episode}')
 
             action, _state = model.predict(state)
@@ -163,7 +162,7 @@ class Taxi:
             kwargs={'goals': goals}
         )
 
-        model = PPO.load(f'{self.path_w_meta_controller}/taxi')
+        model = PPO.load(f'{self.path_w_meta_controller}best_model')
         env = gym.make(self.env_meta_controller)
         done = False
         return model, env, done
