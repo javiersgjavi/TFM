@@ -35,6 +35,7 @@ class Taxi:
         model = PPO('MlpPolicy', envs, verbose=1)
 
         model.learn(total_timesteps=steps)
+        model.save(f'{self.path_w_controller}/taxi')
 
     def unified_learning(self, steps, n_envs=10):
         self.explore_goals()
@@ -53,6 +54,7 @@ class Taxi:
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
         model.learn(total_timesteps=steps, callback=eval_callback)
+        model.save(f'{self.path_w_meta_controller}/taxi')
 
     def explore_goals(self):
         print('[INFO] Starting the exploration of the environment to find the goals')
