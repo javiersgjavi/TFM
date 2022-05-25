@@ -29,7 +29,7 @@ class TaxiSimplified(gym.Env):
         self.current_goal = self.generate_random_goal()
         observation = self.env.reset()
         i_observation = self.get_intrinsic_state(observation)
-        self.last_state = i_observation
+        self.last_observation = i_observation
         return i_observation
 
     def render(self, mode='human'):
