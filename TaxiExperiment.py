@@ -57,8 +57,8 @@ class Taxi:
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
         callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=6, verbose=1)
-        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
-                                     log_path=self.path_w_controller, callback_on_new_best=callback_on_best, verbose=0)
+        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_meta_controller,
+                                     log_path=self.path_w_meta_controller, callback_on_new_best=callback_on_best, verbose=0)
         model.learn(total_timesteps=steps, callback=eval_callback)
 
     def explore_goals(self):
