@@ -24,7 +24,6 @@ class Taxi:
             entry_point='envs.TaxiSimplified:TaxiSimplified',
             max_episode_steps=20,
             kwargs={
-                'num_goals': 4,
                 'goal_reward': 100,
                 'death_penalty': -20,
                 'episode_limit': 12}
