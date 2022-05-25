@@ -92,11 +92,6 @@ class Taxi:
         self.intrinsic_learning(steps, n_envs)
         self.unified_learning(episodes)
 
-        if not os.path.exists('./goals_detected/'):
-            os.makedirs('./goals_detected/')
-
-        np.save('./goals_detected/trained_goals.npy', self.goals_detected)
-
     def watch(self):
 
         model, env, done = self.start_env_to_play()
@@ -109,6 +104,7 @@ class Taxi:
 
             action, _states = model.predict(state)
             state, reward, done, info = env.render_step(action)
+            print(action)
 
     def test(self, episodes=10 ** 3):
         print(f'[INFO] Starting test with {episodes} episodes')
@@ -134,6 +130,8 @@ class Taxi:
             reward_ep += reward
             size_ep += steps
 
+            print(reward)
+            print(steps)
         ep_len_mean = np.mean(ep_len)
         ep_len_std = np.std(ep_len)
 
@@ -151,7 +149,7 @@ class Taxi:
         print(msg)
 
     def start_env_to_play(self):
-        goals = np.load('./goals_detected/trained_goals.npy')
+        goals = np.load('./goals_detected/trained_taxi.npy')
 
         gym.envs.register(
             id=self.env_meta_controller,
