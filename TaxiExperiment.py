@@ -13,8 +13,8 @@ class Taxi:
         self.env_controller = 'TaxiSimplified-v0'
         self.env_meta_controller = 'TaxiHierarchical-v0'
         self.goals_detected = []
-        self.path_w_controller = './weights_controller/'
-        self.path_w_meta_controller = './weights_metacontroller/'
+        self.path_w_controller = './weights_controller/taxi/'
+        self.path_w_meta_controller = './weights_metacontroller/taxi/'
         self.path_goals_detected = './goals_detected/taxi'
 
     def intrinsic_learning(self, steps, n_envs=10):
@@ -34,11 +34,11 @@ class Taxi:
 
         envs = make_vec_env(self.env_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=1024, verbose=1)
-
         callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=56, verbose=1)
-        model.learn(total_timesteps=steps, callback=callback_on_best)
+        eval_callback = EvalCallback(gym.make(self.env_controller), best_model_save_path=self.path_w_controller,
+                                     log_path=self.path_w_controller, callback_on_new_best=callback_on_best, verbose=1)
 
-        model.save(f'{self.path_w_controller}/taxi')
+        model.learn(total_timesteps=steps, callback=eval_callback)
 
     def unified_learning(self, steps, n_envs=10):
         self.explore_goals()
@@ -57,7 +57,9 @@ class Taxi:
         envs = make_vec_env(self.env_meta_controller, n_envs=n_envs)
         model = PPO('MlpPolicy', envs, n_steps=512, verbose=1)
         callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=4, verbose=1)
-        model.learn(total_timesteps=steps, callback=callback_on_best)
+        eval_callback = EvalCallback(envs, best_model_save_path=self.path_w_controller,
+                                     log_path=self.path_w_controller, callback_on_new_best=callback_on_best, verbose=0)
+        model.learn(total_timesteps=steps, callback=eval_callback)
 
     def explore_goals(self):
         print('[INFO] Starting the exploration of the environment to find the goals')
@@ -163,7 +165,7 @@ class Taxi:
             kwargs={'goals': goals}
         )
 
-        model = PPO.load(f'{self.path_w_meta_controller}taxi')
+        model = PPO.load(f'{self.path_w_meta_controller}best_model')
         env = gym.make(self.env_meta_controller)
         done = False
         return model, env, done
