@@ -14,8 +14,8 @@ class Montezuma:
         self.env_controller = 'MontezumaSimplified-v0'
         self.env_meta_controller = 'MontezumaHierarchical-v0'
         self.goals_detected = np.zeros((self.num_goals, 2))
-        self.path_w_controller = './weights_controller/'
-        self.path_w_meta_controller = './weights_metacontroller/'
+        self.path_w_controller = './weights_controller/montezuma/'
+        self.path_w_meta_controller = './weights_metacontroller/montezuma/'
         self.path_goals_detected = './goals_detected/'
         self.goals_detected = None
         self.margin = margin
@@ -45,11 +45,7 @@ class Montezuma:
 
         if not os.path.exists(self.path_w_controller):
             os.makedirs(self.path_w_controller)
-        model.save(f'{self.path_w_controller}/montezuma')
-
-        #if not os.path.exists(self.path_goals_detected):
-        #    os.makedirs(self.path_goals_detected)
-        #np.save(f'{self.path_goals_detected}trained_intrinsic_montezuma.npy', env.get_goals())
+        model.save(f'{self.path_w_controller}best_model')
 
     def unified_learning(self, steps, load_kmeans=False):
         print('[INFO] Starting unified learning...')
@@ -83,7 +79,7 @@ class Montezuma:
         if not os.path.exists(self.path_w_meta_controller):
             os.makedirs(self.path_w_meta_controller)
 
-        model.save(f'{self.path_w_meta_controller}/montezuma')
+        model.save(f'{self.path_w_meta_controller}best_model')
 
     def train(self, steps=5 * 10 ** 5, episodes=5 * 10 ** 5):
         self.intrinsic_learning(steps)
