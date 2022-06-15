@@ -1,3 +1,4 @@
+import time
 import argparse
 from TaxiExperiment import Taxi
 from MontezumaExperiment import Montezuma
@@ -13,12 +14,11 @@ def main(args):
         experiment = Taxi()
 
     if job == 0:
-        if env_id == 0:
-            experiment.intrinsic_learning(steps=int(7.8*10**5))
-            experiment.unified_learning(steps=8*10**5, load_kmeans=True)
-        else:
-            experiment.train()
-            #experiment.unified_learning(steps=1 * 10 ** 5)
+        t = time.time()
+
+        experiment.train()
+
+        print(time.time() - t)
     elif job == 1:
         experiment.watch()
 

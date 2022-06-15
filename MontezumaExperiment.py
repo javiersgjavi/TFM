@@ -8,7 +8,7 @@ from stable_baselines3.common.env_util import make_vec_env
 
 
 class Montezuma:
-    def __init__(self, num_goals=10, margin=5, steps_kmeans=2 * 10 ** 5):
+    def __init__(self, num_goals=10, margin=5, steps_kmeans=10 ** 5):
 
         self.num_goals = num_goals
         self.env_controller = 'MontezumaSimplified-v0'
@@ -31,7 +31,7 @@ class Montezuma:
             max_episode_steps=500,
             kwargs={
                 'goals': self.generate_random_goals(),
-                'goal_reward': 100,
+                'goal_reward': 200,
                 'death_penalty': -20,
                 'episode_limit': 500,
                 'margin': self.margin,
@@ -81,7 +81,7 @@ class Montezuma:
 
         model.save(f'{self.path_w_meta_controller}best_model')
 
-    def train(self, steps=5 * 10 ** 5, episodes=5 * 10 ** 5):
+    def train(self, steps=7.8 * 10 ** 5, episodes=5 * 10 ** 5):
         self.intrinsic_learning(steps)
         self.unified_learning(episodes)
 

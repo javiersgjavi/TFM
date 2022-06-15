@@ -1,9 +1,11 @@
 import argparse
+import time
 import gym
 import os
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 
 
 def main(args):
@@ -12,10 +14,16 @@ def main(args):
     if job == 0 or job == 2:
         envs = make_vec_env('Taxi-v3', n_envs=10)
         model = PPO('MlpPolicy', envs, verbose=1)
-        model.learn(total_timesteps=10 ** 6)
+        callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=9, verbose=1)
+        eval_callback = EvalCallback(gym.make('Taxi-v3'), best_model_save_path='./weights_controller/sdfbasic_taxi',
+                                     log_path='./weights_controller/sdfbasic_taxi', callback_on_new_best=callback_on_best,
+                                     verbose=1)
+        t = time.time()
+        model.learn(total_timesteps=10 ** 6, callback=eval_callback)
+        print(time.time() - t)
         if not os.path.exists('./weights_controller/basic_taxi/'):
             os.makedirs('./weights_controller/basic_taxi/')
-        model.save('./weights_controller/basic_taxi/best_model')
+
 
     elif job == 1 or job == 2:
         model = PPO.load(f'./weights_controller/basic_taxi/best_model')
